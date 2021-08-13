@@ -60,22 +60,22 @@ ORDER BY 2,3;
 
 -- Using CTE to perform Calculation on Partition By in previous query
 With PopvsVacc (Continent, Location, Date, Population, New_Vaccinations, RollingPeopleVaccinated)
-as
+AS
 (
-Select deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, SUM(CONVERT(int,vacc.new_vaccinations)) OVER (Partition by deaths.Location Order by deaths.location, deaths.Date) as RollingPeopleVaccinated
-From CovidDeaths deaths
-Join CovidVaccinations vacc
-	On deaths.location = vacc.location
-	and deaths.date = vacc.date
-where deaths.continent is not null 
+SELECT deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, SUM(CONVERT(int,vacc.new_vaccinations)) OVER (PARTITION BY deaths.Location ORDER BY deaths.location, deaths.Date) AS RollingPeopleVaccinated
+FROM CovidDeaths deaths
+JOIN CovidVaccinations vacc
+	ON deaths.location = vacc.location
+	AND deaths.date = vacc.date
+WHERE deaths.continent IS NOT NULL 
 )
-Select *, (RollingPeopleVaccinated*100/Population)
-From PopvsVacc
+SELECT *, (RollingPeopleVaccinated*100/Population)
+FROM PopvsVacc
 
 
 -- Using Temp Table to perform Calculation on Partition By in previous query
-DROP Table if exists #PercentPopulationVaccinated
-Create Table #PercentPopulationVaccinated
+DROP TABLE if exists #PercentPopulationVaccinated
+CREATE TABLE #PercentPopulationVaccinated
 (
 Continent nvarchar(255),
 Location nvarchar(255),
@@ -85,20 +85,20 @@ New_vaccinations numeric,
 RollingPeopleVaccinated numeric
 );
 
-Insert into #PercentPopulationVaccinated
-Select deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, SUM(CONVERT(int,vacc.new_vaccinations)) OVER (Partition by deaths.Location Order by deaths.location, deaths.Date) as RollingPeopleVaccinated
-From CovidDeaths deaths
-Join CovidVaccinations vacc
-	On deaths.location = vacc.location
-	and deaths.date = vacc.date;
+INSERT INTO #PercentPopulationVaccinated
+SELECT deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, SUM(CONVERT(int,vacc.new_vaccinations)) OVER (PARTITION BY deaths.Location ORDER BY deaths.location, deaths.Date) AS RollingPeopleVaccinated
+FROM CovidDeaths deaths
+JOIN CovidVaccinations vacc
+	ON deaths.location = vacc.location
+	AND deaths.date = vacc.date;
 
-Select *, (RollingPeopleVaccinated/Population)*100
-From #PercentPopulationVaccinated
+SELECT *, (RollingPeopleVaccinated*100/Population)
+FROM #PercentPopulationVaccinated
 
 
 -- Creating View to store data for later visualizations
-Create View PercentPopulationVaccinated AS
-SELECT deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, SUM(CONVERT(int,vacc.new_vaccinations)) OVER (Partition by deaths.Location Order by deaths.location, deaths.Date) as RollingPeopleVaccinated
+CREATE View PercentPopulationVaccinated AS
+SELECT deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, SUM(CONVERT(int,vacc.new_vaccinations)) OVER (PARTITION BY deaths.Location ORDER BY deaths.location, deaths.Date) AS RollingPeopleVaccinated
 FROM CovidDeaths deaths
 JOIN CovidVaccinations vacc
 	ON deaths.location = vacc.location
